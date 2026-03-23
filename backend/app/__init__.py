@@ -42,7 +42,7 @@ def create_app():
     app.register_blueprint(campaigns_bp, url_prefix="/api/campaigns")
     app.register_blueprint(scraper_bp, url_prefix="/api/scraper")
 
-   with app.app_context():
+  with app.app_context():
     try:
         db.create_all()
     except Exception:
