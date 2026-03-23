@@ -27,7 +27,11 @@ def create_app():
     app.config["MAIL_PASSWORD"] = os.getenv("MAIL_PASSWORD")
     app.config["MAIL_DEFAULT_SENDER"] = os.getenv("MAIL_USERNAME")
 
-    CORS(app, resources={r"/api/*": {"origins": "http://localhost:3000"}})
+    allowed_origins = ["http://localhost:3000"]
+    frontend_url = os.getenv("FRONTEND_URL")
+    if frontend_url:
+        allowed_origins.append(frontend_url.rstrip("/"))
+    CORS(app, resources={r"/api/*": {"origins": allowed_origins}})
 
     db.init_app(app)
     mail.init_app(app)
