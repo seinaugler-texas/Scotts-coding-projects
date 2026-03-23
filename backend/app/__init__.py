@@ -1,0 +1,47 @@
+from flask import Flask
+from flask_cors import CORS
+from flask_sqlalchemy import SQLAlchemy
+from flask_mail import Mail
+from apscheduler.schedulers.background import BackgroundScheduler
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+
+db = SQLAlchemy()
+mail = Mail()
+scheduler = BackgroundScheduler()
+
+
+def create_app():
+    app = Flask(__name__)
+
+    app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "dev-secret-key")
+    app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL", "sqlite:///nonprofit_outreach.db")
+    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
+    app.config["MAIL_SERVER"] = os.getenv("MAIL_SERVER", "smtp.gmail.com")
+    app.config["MAIL_PORT"] = int(os.getenv("MAIL_PORT", 587))
+    app.config["MAIL_USE_TLS"] = os.getenv("MAIL_USE_TLS", "True") == "True"
+    app.config["MAIL_USERNAME"] = os.getenv("MAIL_USERNAME")
+    app.config["MAIL_PASSWORD"] = os.getenv("MAIL_PASSWORD")
+    app.config["MAIL_DEFAULT_SENDER"] = os.getenv("MAIL_USERNAME")
+
+    CORS(app, resources={r"/api/*": {"origins": "http://localhost:3000"}})
+
+    db.init_app(app)
+    mail.init_app(app)
+
+    from .routes import companies_bp, templates_bp, campaigns_bp, scraper_bp
+    app.register_blueprint(companies_bp, url_prefix="/api/companies")
+    app.register_blueprint(templates_bp, url_prefix="/api/templates")
+    app.register_blueprint(campaigns_bp, url_prefix="/api/campaigns")
+    app.register_blueprint(scraper_bp, url_prefix="/api/scraper")
+
+    with app.app_context():
+        db.create_all()
+
+    if not scheduler.running:
+        scheduler.start()
+
+    return app

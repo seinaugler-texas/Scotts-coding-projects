@@ -1,0 +1,17 @@
+flask==3.0.3
+flask-cors==4.0.1
+flask-sqlalchemy==3.1.1
+flask-mail==0.10.0
+apscheduler==3.10.4
+requests==2.32.3
+beautifulsoup4==4.12.3
+lxml==5.2.2
+playwright==1.44.0
+python-dotenv==1.0.1
+celery==5.4.0
+redis==5.0.7
+sqlalchemy==2.0.30
+alembic==1.13.1
+pydantic==2.7.1
+validators==0.28.3
+robotexclusionrulesparser==1.7.1
