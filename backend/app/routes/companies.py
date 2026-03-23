@@ -1,4 +1,6 @@
-from flask import Blueprint, jsonify, request
+import csv
+import io
+from flask import Blueprint, jsonify, request, Response
 from ..models import Company
 from .. import db
 
@@ -74,6 +76,24 @@ def delete_company(company_id):
     db.session.delete(company)
     db.session.commit()
     return jsonify({"message": "deleted"}), 200
+
+
+@companies_bp.get("/export")
+def export_companies():
+    """Download all companies as a CSV file."""
+    companies = Company.query.order_by(Company.name).all()
+    fields = ["id", "name", "website", "donation_email", "submission_form_url",
+              "contact_name", "notes", "source_url", "verified", "created_at"]
+    output = io.StringIO()
+    writer = csv.DictWriter(output, fieldnames=fields, extrasaction="ignore")
+    writer.writeheader()
+    for c in companies:
+        writer.writerow(c.to_dict())
+    return Response(
+        output.getvalue(),
+        mimetype="text/csv",
+        headers={"Content-Disposition": "attachment; filename=companies.csv"},
+    )
 
 
 @companies_bp.post("/bulk")

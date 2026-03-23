@@ -111,35 +111,26 @@ def run_campaign(app, campaign_id: int) -> None:
         campaign.status = "running"
         db.session.commit()
 
-        # Determine which companies still need to be contacted
-        contacted_ids = {
-            log.company_id
-            for log in OutreachLog.query.filter(
-                OutreachLog.campaign_id == campaign_id,
-                OutreachLog.status.in_(["sent", "skipped"]),
-            ).all()
-        }
-
-        companies = Company.query.filter(
-            Company.id.notin_(contacted_ids),
-            Company.donation_email.isnot(None),
+        # Only contact companies explicitly added to this campaign (pending OutreachLogs)
+        pending_logs = OutreachLog.query.filter(
+            OutreachLog.campaign_id == campaign_id,
+            OutreachLog.status == "pending",
         ).all()
 
         sent_today = 0
-        for company in companies:
+        for log in pending_logs:
             if sent_today >= campaign.daily_limit:
                 logger.info("Daily limit reached for campaign %d", campaign_id)
                 campaign.status = "scheduled"
                 db.session.commit()
                 return
 
-            log = OutreachLog(
-                company_id=company.id,
-                campaign_id=campaign_id,
-                status="pending",
-            )
-            db.session.add(log)
-            db.session.commit()
+            company = db.session.get(Company, log.company_id)
+            if not company:
+                log.status = "skipped"
+                log.error_message = "Company record not found."
+                db.session.commit()
+                continue
 
             success = send_email_to_company(campaign, company, log)
             if success:

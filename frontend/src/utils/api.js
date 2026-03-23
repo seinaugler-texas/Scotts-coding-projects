@@ -31,6 +31,7 @@ export const scheduleCampaign = (id) => api.post(`/campaigns/${id}/schedule`);
 export const pauseCampaign = (id) => api.post(`/campaigns/${id}/pause`);
 export const resumeCampaign = (id) => api.post(`/campaigns/${id}/resume`);
 export const getCampaignLogs = (id) => api.get(`/campaigns/${id}/logs`);
+export const previewCampaign = (id) => api.get(`/campaigns/${id}/preview`);
 export const addCompaniesToCampaign = (id, company_ids) =>
   api.post(`/campaigns/${id}/add_companies`, { company_ids });
 

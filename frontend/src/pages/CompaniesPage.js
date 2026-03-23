@@ -82,7 +82,12 @@ export default function CompaniesPage() {
     <div style={{ padding: "2rem" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.25rem" }}>
         <h1 style={{ fontSize: "1.5rem", fontWeight: 700 }}>Companies</h1>
-        <button className="btn btn-primary" onClick={() => setModal("add")}>+ Add Company</button>
+        <div style={{ display: "flex", gap: ".5rem" }}>
+          <a className="btn btn-secondary" href="/api/companies/export" download="companies.csv">
+            Export CSV
+          </a>
+          <button className="btn btn-primary" onClick={() => setModal("add")}>+ Add Company</button>
+        </div>
       </div>
 
       <div className="card" style={{ marginBottom: "1rem" }}>

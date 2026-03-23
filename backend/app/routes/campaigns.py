@@ -145,6 +145,33 @@ def get_logs(campaign_id):
     return jsonify([log.to_dict() for log in logs])
 
 
+@campaigns_bp.get("/<int:campaign_id>/preview")
+def preview_campaign(campaign_id):
+    """Return a rendered preview of the campaign email using sample data."""
+    campaign = db.get_or_404(Campaign, campaign_id)
+    template = campaign.template
+
+    # Build a dummy company for preview rendering
+    dummy = Company(
+        name="Sample Company Inc.",
+        donation_email="donations@samplecompany.com",
+        contact_name="Donations Team",
+    )
+
+    from ..email_sender import build_context, render_template, COMPLIANCE_FOOTER
+    context = build_context(campaign, dummy)
+    rendered_subject, rendered_body = render_template(template.subject, template.body, context)
+    footer = COMPLIANCE_FOOTER.format(
+        sender_name=campaign.sender_name,
+        nonprofit_name=campaign.nonprofit_name,
+    )
+    return jsonify({
+        "subject": rendered_subject,
+        "body": rendered_body + footer,
+        "template_name": template.name,
+    })
+
+
 @campaigns_bp.post("/<int:campaign_id>/add_companies")
 def add_companies(campaign_id):
     """Associate a list of company IDs with this campaign (creates pending logs)."""
