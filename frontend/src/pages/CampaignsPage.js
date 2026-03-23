@@ -270,7 +270,7 @@ export default function CampaignsPage() {
 
   const { data } = useQuery("campaigns", getCampaigns);
   const { data: templatesData } = useQuery("templates", getTemplates);
-  const campaigns = data?.data ?? [];
+  const campaigns = Array.isArray(data?.data) ? data.data : [];
   const templates = templatesData?.data ?? [];
 
   const createMut = useMutation(createCampaign, { onSuccess: () => { qc.invalidateQueries("campaigns"); setShowNew(false); } });

@@ -19,7 +19,7 @@ export default function Dashboard() {
   const { data: campaignsData } = useQuery("campaigns", getCampaigns);
 
   const totalCompanies = companiesData?.data?.total ?? 0;
- const campaigns = Array.isArray(campaignsData?.data) ? campaignsData.data : [];
+  const campaigns = Array.isArray(campaignsData?.data) ? campaignsData.data : [];
   const running = campaigns.filter((c) => c.status === "running").length;
   const completed = campaigns.filter((c) => c.status === "completed").length;
   const totalSent = campaigns.reduce((sum, c) => sum + (c.stats?.sent ?? 0), 0);
