@@ -11,4 +11,4 @@ COPY . .
 
 EXPOSE 5000
 
-CMD ["python", "run.py"]
+CMD gunicorn "app:create_app()" --bind 0.0.0.0:$PORT --workers 2 --timeout 120
