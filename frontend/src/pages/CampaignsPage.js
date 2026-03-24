@@ -7,6 +7,9 @@ import {
   addCompaniesToCampaign, previewCampaign,
 } from "../utils/api";
 import { format } from "date-fns";
+import axios from "axios";
+
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "https://perfect-essence-production-0ca7.up.railway.app";
 
 function CampaignModal({ templates, onClose, onSave }) {
   const [form, setForm] = useState({
@@ -154,6 +157,91 @@ function PreviewModal({ campaignId, onClose }) {
   );
 }
 
+function FillFormsModal({ campaignId, onClose }) {
+  const [status, setStatus] = useState("idle");
+  const [results, setResults] = useState([]);
+  const [error, setError] = useState(null);
+
+  const startFilling = async () => {
+    setStatus("running");
+    setError(null);
+    try {
+      const res = await axios.post(`${BACKEND_URL}/api/scraper/fill_forms_campaign`, {
+        campaign_id: campaignId,
+      });
+      setResults(res.data.results || []);
+      setStatus("done");
+    } catch (err) {
+      setError("Failed to run form filler. Check logs.");
+      setStatus("error");
+    }
+  };
+
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.4)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50 }}>
+      <div className="card" style={{ width: 700, maxHeight: "88vh", overflow: "auto" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "1rem" }}>
+          <h2 style={{ fontSize: "1.1rem", fontWeight: 600 }}>🤖 Auto Fill Donation Forms</h2>
+          <button className="btn btn-secondary" onClick={onClose}>Close</button>
+        </div>
+
+        {status === "idle" && (
+          <div>
+            <p style={{ marginBottom: "1rem", color: "var(--color-muted)", fontSize: ".9rem" }}>
+              This will automatically visit each company's donation form URL and fill in your nonprofit information. 
+              Forms will be filled but <strong>not submitted</strong> — you can review before submitting.
+            </p>
+            <button className="btn btn-primary" onClick={startFilling}>Start Filling Forms</button>
+          </div>
+        )}
+
+        {status === "running" && (
+          <div style={{ textAlign: "center", padding: "2rem" }}>
+            <p>🤖 Filling forms... this may take a few minutes.</p>
+            <p style={{ fontSize: ".85rem", color: "var(--color-muted)" }}>Please wait and don't close this window.</p>
+          </div>
+        )}
+
+        {status === "error" && (
+          <div style={{ color: "var(--color-danger)" }}>{error}</div>
+        )}
+
+        {status === "done" && (
+          <div>
+            <p style={{ marginBottom: "1rem", color: "green", fontWeight: 600 }}>
+              ✅ Done! Processed {results.length} companies.
+            </p>
+            <table>
+              <thead>
+                <tr>
+                  <th>Company</th>
+                  <th>Status</th>
+                  <th>Fields Filled</th>
+                  <th>Submit Button</th>
+                </tr>
+              </thead>
+              <tbody>
+                {results.map((r, i) => (
+                  <tr key={i}>
+                    <td style={{ fontWeight: 500 }}>{r.company}</td>
+                    <td>
+                      <span style={{ color: r.status === "filled" ? "green" : r.status === "error" ? "red" : "orange" }}>
+                        {r.status}
+                      </span>
+                    </td>
+                    <td style={{ fontSize: ".8rem" }}>{(r.fields_filled || []).join(", ") || "—"}</td>
+                    <td>{r.submit_button_found ? "✓ Found" : "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function AddCompaniesModal({ campaignId, onClose, onDone }) {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
@@ -267,6 +355,7 @@ export default function CampaignsPage() {
   const [logsFor, setLogsFor] = useState(null);
   const [previewFor, setPreviewFor] = useState(null);
   const [addCompaniesFor, setAddCompaniesFor] = useState(null);
+  const [fillFormsFor, setFillFormsFor] = useState(null);
 
   const { data } = useQuery("campaigns", getCampaigns);
   const { data: templatesData } = useQuery("templates", getTemplates);
@@ -318,6 +407,7 @@ export default function CampaignsPage() {
                   <button className="btn btn-secondary" onClick={() => setPreviewFor(c.id)}>Preview</button>
                   <button className="btn btn-secondary" onClick={() => setAddCompaniesFor(c.id)}>+ Companies</button>
                   <button className="btn btn-secondary" onClick={() => setLogsFor(c.id)}>Logs</button>
+                  <button className="btn btn-primary" onClick={() => setFillFormsFor(c.id)}>🤖 Fill Forms</button>
                   <button className="btn btn-danger" onClick={() => { if (window.confirm("Delete campaign?")) deleteMut.mutate(c.id); }}>Delete</button>
                 </div>
               </div>
@@ -329,6 +419,7 @@ export default function CampaignsPage() {
       {showNew && <CampaignModal templates={templates} onClose={() => setShowNew(false)} onSave={(form) => createMut.mutate(form)} />}
       {logsFor && <LogsModal campaignId={logsFor} onClose={() => setLogsFor(null)} />}
       {previewFor && <PreviewModal campaignId={previewFor} onClose={() => setPreviewFor(null)} />}
+      {fillFormsFor && <FillFormsModal campaignId={fillFormsFor} onClose={() => setFillFormsFor(null)} />}
       {addCompaniesFor && (
         <AddCompaniesModal
           campaignId={addCompaniesFor}
