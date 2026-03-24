@@ -12,14 +12,11 @@ db = SQLAlchemy()
 mail = Mail()
 scheduler = BackgroundScheduler()
 
-
 def create_app():
     app = Flask(__name__)
-
     app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "dev-secret-key")
     app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL", "sqlite:///nonprofit_outreach.db")
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-
     app.config["MAIL_SERVER"] = os.getenv("MAIL_SERVER", "smtp.gmail.com")
     app.config["MAIL_PORT"] = int(os.getenv("MAIL_PORT", 587))
     app.config["MAIL_USE_TLS"] = os.getenv("MAIL_USE_TLS", "True") == "True"
@@ -31,6 +28,7 @@ def create_app():
     frontend_url = os.getenv("FRONTEND_URL")
     if frontend_url:
         allowed_origins.append(frontend_url.rstrip("/"))
+
     CORS(app, resources={r"/api/*": {"origins": allowed_origins}})
 
     db.init_app(app)
@@ -43,7 +41,7 @@ def create_app():
     app.register_blueprint(scraper_bp, url_prefix="/api/scraper")
 
     with app.app_context():
-    db.create_all()
+        db.create_all()
 
     if not scheduler.running:
         scheduler.start()
