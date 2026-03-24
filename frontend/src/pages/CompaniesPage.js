@@ -85,15 +85,33 @@ export default function CompaniesPage() {
     if (!file) return;
     const reader = new FileReader();
     reader.onload = (ev) => {
-      const lines = ev.target.result.split("\n").filter(Boolean);
-      const headers = lines[0].split(",").map((h) => h.trim().replace(/"/g, ""));
-      const companies = lines.slice(1).map((line) => {
-        const values = line.split(",").map((v) => v.trim().replace(/"/g, ""));
-        const obj = {};
-        headers.forEach((h, i) => { obj[h] = values[i] || ""; });
-        return obj;
-      }).filter((c) => c.name);
-      bulkMut.mutate(companies);
+      try {
+        const text = ev.target.result;
+        const lines = text.split(/\r?\n/).filter(Boolean);
+        const headers = lines[0].split(",").map((h) => h.trim().replace(/"/g, ""));
+        const companies = lines.slice(1).map((line) => {
+          const values = [];
+          let current = "";
+          let inQuotes = false;
+          for (let i = 0; i < line.length; i++) {
+            if (line[i] === '"') {
+              inQuotes = !inQuotes;
+            } else if (line[i] === "," && !inQuotes) {
+              values.push(current.trim());
+              current = "";
+            } else {
+              current += line[i];
+            }
+          }
+          values.push(current.trim());
+          const obj = {};
+          headers.forEach((h, i) => { obj[h] = values[i] || ""; });
+          return obj;
+        }).filter((c) => c.name);
+        bulkMut.mutate(companies);
+      } catch (err) {
+        setImportMsg("❌ Import failed. Check your CSV format.");
+      }
     };
     reader.readAsText(file);
     e.target.value = "";
@@ -101,7 +119,7 @@ export default function CompaniesPage() {
 
   const downloadTemplate = () => {
     const headers = "name,website,donation_email,submission_form_url,contact_name,notes\n";
-    const example = "H-E-B,https://newsroom.heb.com/support,,https://newsroom.heb.com/community/apply-for-support,Community Investment Program,Apply 8 weeks before event\n";
+    const example = "HEB,https://newsroom.heb.com/support,,https://newsroom.heb.com/community/apply-for-support,Community Investment Program,Apply 8 weeks before event\n";
     const blob = new Blob([headers + example], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
