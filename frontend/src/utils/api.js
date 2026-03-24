@@ -1,7 +1,9 @@
 import axios from "axios";
 
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "https://perfect-essence-production-0ca7.up.railway.app";
+
 const api = axios.create({
-  baseURL: "/api",
+  baseURL: `${BACKEND_URL}/api`,
   headers: { "Content-Type": "application/json" },
 });
 
