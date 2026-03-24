@@ -16,3 +16,4 @@ alembic==1.13.1
 pydantic==2.7.1
 validators==0.28.3
 robotexclusionrulesparser==1.7.1
+psycopg2-binary==2.9.9
