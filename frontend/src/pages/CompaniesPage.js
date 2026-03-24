@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "react-query";
-import { getCompanies, createCompany, updateCompany, deleteCompany } from "../utils/api";
+import { getCompanies, createCompany, updateCompany, deleteCompany, bulkImportCompanies } from "../utils/api";
 
 function CompanyModal({ company, onClose, onSave }) {
   const [form, setForm] = useState({
@@ -58,7 +58,9 @@ export default function CompaniesPage() {
   const qc = useQueryClient();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
-  const [modal, setModal] = useState(null); // null | "add" | company object
+  const [modal, setModal] = useState(null);
+  const [importMsg, setImportMsg] = useState(null);
+  const fileRef = useRef();
 
   const { data, isLoading } = useQuery(
     ["companies", page, search],
@@ -66,95 +68,4 @@ export default function CompaniesPage() {
     { keepPreviousData: true }
   );
 
-  const createMut = useMutation(createCompany, { onSuccess: () => { qc.invalidateQueries("companies"); setModal(null); } });
-  const updateMut = useMutation(({ id, data }) => updateCompany(id, data), { onSuccess: () => { qc.invalidateQueries("companies"); setModal(null); } });
-  const deleteMut = useMutation(deleteCompany, { onSuccess: () => qc.invalidateQueries("companies") });
-
-  const companies = data?.data?.companies ?? [];
-  const totalPages = data?.data?.pages ?? 1;
-
-  const handleSave = (form) => {
-    if (modal === "add") createMut.mutate(form);
-    else updateMut.mutate({ id: modal.id, data: form });
-  };
-
-  return (
-    <div style={{ padding: "2rem" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.25rem" }}>
-        <h1 style={{ fontSize: "1.5rem", fontWeight: 700 }}>Companies</h1>
-        <div style={{ display: "flex", gap: ".5rem" }}>
-          <a className="btn btn-secondary" href="/api/companies/export" download="companies.csv">
-            Export CSV
-          </a>
-          <button className="btn btn-primary" onClick={() => setModal("add")}>+ Add Company</button>
-        </div>
-      </div>
-
-      <div className="card" style={{ marginBottom: "1rem" }}>
-        <input
-          className="form-control"
-          placeholder="Search by name…"
-          value={search}
-          onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-          style={{ maxWidth: 320 }}
-        />
-      </div>
-
-      <div className="card" style={{ padding: 0, overflow: "hidden" }}>
-        {isLoading ? (
-          <p style={{ padding: "1.5rem", color: "var(--color-muted)" }}>Loading…</p>
-        ) : companies.length === 0 ? (
-          <p style={{ padding: "1.5rem", color: "var(--color-muted)" }}>
-            No companies found. Add one manually or use the Scraper.
-          </p>
-        ) : (
-          <table>
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Donation Email</th>
-                <th>Form URL</th>
-                <th>Verified</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {companies.map((c) => (
-                <tr key={c.id}>
-                  <td style={{ fontWeight: 500 }}>{c.name}</td>
-                  <td>{c.donation_email || <span style={{ color: "var(--color-muted)" }}>—</span>}</td>
-                  <td>
-                    {c.submission_form_url
-                      ? <a href={c.submission_form_url} target="_blank" rel="noreferrer" style={{ fontSize: ".8rem" }}>Open Form</a>
-                      : <span style={{ color: "var(--color-muted)" }}>—</span>}
-                  </td>
-                  <td>{c.verified ? "✓" : ""}</td>
-                  <td>
-                    <button className="btn btn-secondary" style={{ marginRight: ".5rem" }} onClick={() => setModal(c)}>Edit</button>
-                    <button className="btn btn-danger" onClick={() => { if (window.confirm("Delete this company?")) deleteMut.mutate(c.id); }}>Delete</button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
-
-      {totalPages > 1 && (
-        <div style={{ display: "flex", gap: ".5rem", marginTop: "1rem", justifyContent: "flex-end" }}>
-          <button className="btn btn-secondary" disabled={page === 1} onClick={() => setPage((p) => p - 1)}>← Prev</button>
-          <span style={{ alignSelf: "center", fontSize: ".875rem" }}>Page {page} / {totalPages}</span>
-          <button className="btn btn-secondary" disabled={page === totalPages} onClick={() => setPage((p) => p + 1)}>Next →</button>
-        </div>
-      )}
-
-      {modal && (
-        <CompanyModal
-          company={modal === "add" ? null : modal}
-          onClose={() => setModal(null)}
-          onSave={handleSave}
-        />
-      )}
-    </div>
-  );
-}
+  const createMut = useMutation(createCompany, { onSuccess: () => { qc.invalidateQueries
