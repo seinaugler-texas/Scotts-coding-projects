@@ -41,7 +41,7 @@ def create_app():
     app.register_blueprint(scraper_bp, url_prefix="/api/scraper")
 
     with app.app_context():
-    db.create_all(checkfirst=True)
+        db.create_all(checkfirst=True)
 
     if not scheduler.running:
         scheduler.start()
