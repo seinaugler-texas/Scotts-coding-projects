@@ -135,8 +135,7 @@ def run_campaign(app, campaign_id: int) -> None:
             success = send_email_to_company(campaign, company, log)
             if success:
                 sent_today += 1
-
-            time.sleep(campaign.delay_between_emails)
+                time.sleep(campaign.delay_between_emails)
 
         campaign.status = "completed"
         db.session.commit()
