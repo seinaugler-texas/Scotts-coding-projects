@@ -1,8 +1,7 @@
 {
   "mcpServers": {
     "playwright": {
-      "command": "/opt/node22/bin/npx",
-      "args": ["-y", "@playwright/mcp@latest"]
+      "command": "/opt/node22/bin/playwright-mcp"
     }
   }
 }
