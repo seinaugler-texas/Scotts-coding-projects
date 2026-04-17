@@ -2,9 +2,7 @@
   "mcpServers": {
     "playwright": {
       "command": "/opt/node22/bin/playwright-mcp",
-      "env": {
-        "PLAYWRIGHT_BROWSERS_PATH": "/opt/pw-browsers"
-      }
+      "args": ["--executable-path", "/opt/pw-browsers/chromium-1194/chrome-linux/chrome", "--headless"]
     }
   }
 }
